@@ -1,5 +1,7 @@
 package com.ru.usty.scheduling;
 
+import java.util.*;
+
 import com.ru.usty.scheduling.process.ProcessExecution;
 
 public class Scheduler {
@@ -11,7 +13,8 @@ public class Scheduler {
 	/**
 	 * Add any objects and variables here (if needed)
 	 */
-
+	/* list-types */
+	Queue<Integer> FCFSList; // for First Come First Served
 
 	/**
 	 * DO NOT CHANGE DEFINITION OF OPERATION
@@ -39,10 +42,7 @@ public class Scheduler {
 		switch(policy) {
 		case FCFS:	//First-come-first-served
 			System.out.println("Starting new scheduling task: First-come-first-served");
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
-			
+			this.FCFSList = new LinkedList(); //initialize a new linked list for FCFS
 			break;
 		case RR:	//Round robin
 			System.out.println("Starting new scheduling task: Round robin, quantum = " + quantum);
@@ -87,9 +87,38 @@ public class Scheduler {
 	 */
 	public void processAdded(int processID) {
 
-		/**
-		 * Add scheduling code here
-		 */
+		switch(policy) {
+		case FCFS:	//First-come-first-served
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case RR:	//Round robin
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case SPN:	//Shortest process next
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case SRT:	//Shortest remaining time
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case HRRN:	//Highest response ratio next
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case FB:	//Feedback
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		}
 
 	}
 
@@ -98,9 +127,38 @@ public class Scheduler {
 	 */
 	public void processFinished(int processID) {
 
-		/**
-		 * Add scheduling code here
-		 */
+		switch(policy) {
+		case FCFS:	//First-come-first-served
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case RR:	//Round robin
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case SPN:	//Shortest process next
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case SRT:	//Shortest remaining time
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case HRRN:	//Highest response ratio next
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		case FB:	//Feedback
+			/**
+			 * Add your policy specific initialization code here (if needed)
+			 */
+			break;
+		}
 
 	}
 }

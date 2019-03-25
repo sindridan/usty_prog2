@@ -7,7 +7,6 @@ import com.badlogic.gdx.utils.BufferUtils;
 import com.ru.usty.scheduling.process.Process;
 
 import java.nio.FloatBuffer;
-import java.nio.Buffer;
 
 public class SchedulingGraphics implements ApplicationListener{
 
@@ -20,9 +19,7 @@ public class SchedulingGraphics implements ApplicationListener{
 		
 		vertexBuffer = BufferUtils.newFloatBuffer(8);
 		vertexBuffer.put(new float[] {-0.5f,0.0f, -0.5f,1.0f, 0.5f,0.0f, 0.5f,1.0f});
-		//vertexBuffer.rewind();
-		((Buffer)vertexBuffer).rewind();
-		
+		vertexBuffer.rewind();
 	}
 
 	@Override
