@@ -21,6 +21,8 @@ dist/*
 .settings/*
 .project
 .recommenders/*
+.metadata/*
+
 bin/*
 
 
