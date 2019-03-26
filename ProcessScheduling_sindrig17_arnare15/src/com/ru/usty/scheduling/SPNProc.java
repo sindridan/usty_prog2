@@ -24,12 +24,19 @@ public class SPNProc implements Comparable{
    public Object getCompVar() {
         return compVar;
     }
+   
+   public String toString() {
+	   return "SPN object ID: " + processID + ", runtime: " + compVar;
+   }
 
-
+   //for iterator
 	@Override
 	public int compareTo(Object o) {
 		// TODO Auto-generated method stub
 		return this.compVar.compareTo(((SPNProc)o).compVar);
 	}
+	
+	//for iterator
+	
 }
 

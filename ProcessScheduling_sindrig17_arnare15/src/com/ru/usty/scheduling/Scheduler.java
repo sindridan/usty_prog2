@@ -69,8 +69,7 @@ public class Scheduler {
 			System.out.println("Starting new scheduling task: Shortest process next");
 			/* Comparator<ProcessComp> compTime = new TimeCompare(); */
 			this.pQueue = new PriorityQueue<SPNProc>();
-			// SPNProc spn = new SPNProc(processID,
-			// processExecution.getProcessInfo(processID));
+
 			break;
 		case SRT: // Shortest remaining time
 			System.out.println("Starting new scheduling task: Shortest remaining time");
@@ -105,7 +104,6 @@ public class Scheduler {
 
 		// process mapped to a timestamp when it first entered
 		waiting[processID] = System.currentTimeMillis();
-		//ProcessInfo pInfo = processExecution.getProcessInfo(processID);
 
 		switch (policy) {
 		case FCFS: // First-come-first-served
@@ -134,14 +132,10 @@ public class Scheduler {
 			SPNProc spnproc = new SPNProc(processID, processExecution.getProcessInfo(processID));
 
 			if (pQueue.isEmpty()) {
-				//System.out.println("Add if empty: " + processID);
-				//System.out.println("TotalServiceTime " + spnproc.getCompVar() + " for ID: " + spnproc.getProcessID());;
 				pQueue.add(spnproc);
 				processExecution.switchToProcess(processID);
 			} else {
 				pQueue.add(spnproc);
-				//System.out.println("Not empty add: " + processID);
-				//System.out.println("TotalServiceTime " + spnproc.getCompVar() + " for ID: " + spnproc.getProcessID());;
 			}
 
 			break;
@@ -187,20 +181,33 @@ public class Scheduler {
 			 * Add your policy specific initialization code here (if needed)
 			 */
 			break;
+			
 		case SPN: // Shortest process next
-			System.out.println("attempting to remove id: " + processID);
-			System.out.println("pQueue peek id: " + pQueue.peek().getProcessID());
+			System.out.println("--------------- Queue contents ---------------");
+			System.out.println("			  	  Contents:");
+			Iterator<SPNProc> it = pQueue.iterator();
+			while(it.hasNext()) {
+				System.out.println(it.next());
+			}
+			System.out.println("Size of Queue before removal: " + pQueue.size());
+			System.out.println("--------------- End of Queue contents ---------------");
+
 			if(pQueue.peek().getProcessID() == processID) {
 				System.out.println("Success.");
 				pQueue.remove();
 			}
+			else {
+				System.out.println("--------------- Critical failure ---------------");
+				System.out.println("Current ID is: " + processID + ", but head of pQueue is: " + pQueue.peek().getProcessID());
+
+			}
 			if (!pQueue.isEmpty()) {
-				//System.out.println("Inside remove: " + pQueue.peek().getProcessID());
 				processExecution.switchToProcess(pQueue.peek().getProcessID());
 				
 			}
-			System.out.println("Size of pQueue: " + pQueue.size());
+			System.out.println("Size of pQueue after removal: " + pQueue.size());
 			break;
+			
 		case SRT: // Shortest remaining time
 			/**
 			 * Add your policy specific initialization code here (if needed)
