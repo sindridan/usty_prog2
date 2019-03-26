@@ -2,7 +2,6 @@ package com.ru.usty.scheduling;
 
 import java.util.*;
 import com.ru.usty.scheduling.process.*;
-
 import com.ru.usty.scheduling.ProcessComp;
 
 public class Scheduler {
@@ -10,8 +9,8 @@ public class Scheduler {
 	ProcessExecution processExecution;
 	//Process proc;
 	ProcessInfo pInfo;
-	SPNProc SPNPhelp;
-
+	ProcessInfo currProcess;
+	
 	Policy policy;
 	int quantum;
 
@@ -131,12 +130,15 @@ public class Scheduler {
 			break;
 		case SPN: // Shortest process next
 			SPNProc spnproc = new SPNProc(processID, processExecution.getProcessInfo(processID));
-
 			if (pQueue.isEmpty()) {
+				//currProcess = processExecution.getProcessInfo(processID);
 				//System.out.println("Add if empty: " + processID);
 				//System.out.println("TotalServiceTime " + spnproc.getCompVar() + " for ID: " + spnproc.getProcessID());;
 				pQueue.add(spnproc);
 				processExecution.switchToProcess(processID);
+				currProcess = processExecution.getProcessInfo(processID);
+				startTime[processID] = System.currentTimeMillis();
+
 			} else {
 				pQueue.add(spnproc);
 				//System.out.println("Not empty add: " + processID);
@@ -190,13 +192,20 @@ public class Scheduler {
 			System.out.println("attempting to remove id: " + processID);
 			System.out.println("pQueue peek id: " + pQueue.peek().getProcessID());
 			if(pQueue.peek().getProcessID() == processID) {
-				System.out.println("Success.");
-				pQueue.remove();
+				System.out.println("Success.");	
+				pQueue.remove(pQueue.element());
 			}
+			else {
+				System.out.println("Process has been moved in queue, removing correct one.");
+				SPNProc temp = new SPNProc(processID, currProcess);
+				pQueue.remove(temp);
+			}
+			endTime[processID] = System.currentTimeMillis();
 			if (!pQueue.isEmpty()) {
 				//System.out.println("Inside remove: " + pQueue.peek().getProcessID());
 				processExecution.switchToProcess(pQueue.peek().getProcessID());
-				
+				startTime[pQueue.peek().getProcessID()] = System.currentTimeMillis();
+				currProcess = processExecution.getProcessInfo(pQueue.peek().getProcessID());
 			}
 			System.out.println("Size of pQueue: " + pQueue.size());
 			break;
