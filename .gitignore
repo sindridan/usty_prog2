@@ -18,10 +18,19 @@ dist/*
 .DS_STORE
 .vscode/
 .classpath
-.settings/*
 .project
-.recommenders/*
-bin/*
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
 
 
 # Package Files #
