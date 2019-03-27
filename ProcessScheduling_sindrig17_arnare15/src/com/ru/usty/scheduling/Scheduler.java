@@ -2,7 +2,6 @@ package com.ru.usty.scheduling;
 
 import java.util.*;
 import com.ru.usty.scheduling.process.*;
-
 import com.ru.usty.scheduling.ProcessComp;
 
 public class Scheduler {
@@ -10,25 +9,28 @@ public class Scheduler {
 	ProcessExecution processExecution;
 	//Process proc;
 	ProcessInfo pInfo;
-	SPNProc SPNPhelp;
-
+	ProcessInfo currProcess;
+	
 	Policy policy;
 	int quantum;
-
+	
 	/* OTHER VARIABLES IN RELATION TO TIMING AND PROCESSES */
 
-	final int amountOfProcs = 15; // hardcoded, can be fixed by getting the size of arraylist from testsuite
+	final int amountOfProcs = 4; // hardcoded, can be fixed by getting the size of arraylist from testsuite
 	int procsFinished = 0;
+	int currProc;
 
 	/* DATA STRUCTURES FOR IMPLEMENTATIONS */
 
 	Queue<Integer> FCFSstructure;
 	PriorityQueue<SPNProc> pQueue;
+	PriorityQueue<SRTProc> SRTQueue;
+	ArrayList<Integer> RoundRobin;
 
 	/* TIMING OF PROCESSES */
-	long[] waiting = new long[amountOfProcs]; //
-	long[] startTime = new long[amountOfProcs]; // when process reaches execution
-	long[] endTime = new long[amountOfProcs]; // after execution
+	long[] waiting = new long[amountOfProcs];	//
+	long[] startTime = new long[amountOfProcs];	// when process reaches execution
+	long[] endTime = new long [amountOfProcs];	// after execution
 
 	/**
 	 * DO NOT CHANGE DEFINITION OF OPERATION
@@ -48,6 +50,7 @@ public class Scheduler {
 
 		this.policy = policy;
 		this.quantum = quantum;
+		this.currProc = -1; //ID of currently running process - procID's start at 0
 
 		switch (policy) {
 		case FCFS: // First-come-first-served
@@ -73,9 +76,8 @@ public class Scheduler {
 			break;
 		case SRT: // Shortest remaining time
 			System.out.println("Starting new scheduling task: Shortest remaining time");
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			this.SRTQueue = new PriorityQueue<SRTProc>();
+			
 			break;
 		case HRRN: // Highest response ratio next
 			System.out.println("Starting new scheduling task: Highest response ratio next");
@@ -101,7 +103,6 @@ public class Scheduler {
 	 * DO NOT CHANGE DEFINITION OF OPERATION
 	 */
 	public void processAdded(int processID) {
-
 		// process mapped to a timestamp when it first entered
 		waiting[processID] = System.currentTimeMillis();
 
@@ -130,19 +131,59 @@ public class Scheduler {
 			break;
 		case SPN: // Shortest process next
 			SPNProc spnproc = new SPNProc(processID, processExecution.getProcessInfo(processID));
-
 			if (pQueue.isEmpty()) {
 				pQueue.add(spnproc);
 				processExecution.switchToProcess(processID);
+				currProcess = processExecution.getProcessInfo(processID);
+				if(startTime[processID] == 0) {
+					startTime[processID] = System.currentTimeMillis();
+				}
+
 			} else {
 				pQueue.add(spnproc);
 			}
 
 			break;
 		case SRT: // Shortest remaining time
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			//This complicates things more since we have to account for running status of the process
+			SRTProc srtproc = new SRTProc(processID, processExecution.getProcessInfo(processID));
+			if(SRTQueue.isEmpty()) {
+				SRTQueue.add(srtproc);
+				currProc = processID;
+				processExecution.switchToProcess(processID);
+				currProcess = processExecution.getProcessInfo(processID);
+				startTime[processID] = System.currentTimeMillis();
+			}
+			// check if new process will take a shorter time to finish
+			// than he currently running progress will finish.
+			// switch to the new one.
+			else {
+				if(processExecution.getProcessInfo(currProc).totalServiceTime 
+					- processExecution.getProcessInfo(currProc).elapsedExecutionTime  
+					> processExecution.getProcessInfo(processID).totalServiceTime) {
+					SRTQueue.add(srtproc);
+					processExecution.switchToProcess(processID);
+					currProcess = processExecution.getProcessInfo(processID);
+					// clock in the new process here below
+					if(startTime[processID] == 0) {
+						System.out.println("Entered the comparator case for id: " + processID);
+						startTime[processID] = System.currentTimeMillis();
+					}
+					// switch processes, keep ID of former running
+					int tmp = currProc;
+					currProc = processID;
+					// now to update former running process to store finished running time
+					SRTProc temp = new SRTProc(tmp, processExecution.getProcessInfo(tmp));
+					// making a copy of it and adding it to the queue with updated stats on finished running time
+					SRTQueue.remove(temp);
+					SRTProc storeTemp = new SRTProc(tmp, processExecution.getProcessInfo(tmp));
+					SRTQueue.add(storeTemp);
+				}
+				else {
+					SRTQueue.add(srtproc);
+				}
+			}
+			
 			break;
 		case HRRN: // Highest response ratio next
 			/**
@@ -183,35 +224,48 @@ public class Scheduler {
 			break;
 			
 		case SPN: // Shortest process next
-			System.out.println("--------------- Queue contents ---------------");
-			System.out.println("			  	  Contents:");
-			Iterator<SPNProc> it = pQueue.iterator();
-			while(it.hasNext()) {
-				System.out.println(it.next());
-			}
-			System.out.println("Size of Queue before removal: " + pQueue.size());
-			System.out.println("--------------- End of Queue contents ---------------");
-
+			
 			if(pQueue.peek().getProcessID() == processID) {
-				System.out.println("Success.");
-				pQueue.remove();
+				System.out.println("Success.");	
+				pQueue.remove(pQueue.element());
 			}
 			else {
-				System.out.println("--------------- Critical failure ---------------");
-				System.out.println("Current ID is: " + processID + ", but head of pQueue is: " + pQueue.peek().getProcessID());
-
+				SPNProc temp = new SPNProc(processID, currProcess);
+				pQueue.remove(temp);
 			}
+
+			endTime[processID] = System.currentTimeMillis();
 			if (!pQueue.isEmpty()) {
 				processExecution.switchToProcess(pQueue.peek().getProcessID());
-				
+				startTime[pQueue.peek().getProcessID()] = System.currentTimeMillis();
+				currProcess = processExecution.getProcessInfo(pQueue.peek().getProcessID());
 			}
 			System.out.println("Size of pQueue after removal: " + pQueue.size());
 			break;
 			
 		case SRT: // Shortest remaining time
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			currProc = processID;
+			endTime[processID] = System.currentTimeMillis();
+
+			if(SRTQueue.peek().getProcessID() == processID) {
+				SRTQueue.remove(SRTQueue.element());
+			}
+			else {
+	
+				SRTProc temp = new SRTProc(processID, currProcess);
+				SRTQueue.remove(temp);
+			}
+			
+			if(!SRTQueue.isEmpty()) {
+				currProc = SRTQueue.peek().getProcessID();
+				processExecution.switchToProcess(currProc);
+				startTime[currProc] = System.currentTimeMillis();
+				currProcess = processExecution.getProcessInfo(currProc);
+			}
+			else {
+				currProc = -1; //default back to no processes in queue.
+			}
+			
 			break;
 		case HRRN: // Highest response ratio next
 			/**
@@ -227,7 +281,6 @@ public class Scheduler {
 		if (procsFinished == amountOfProcs) {
 			printTime();
 		}
-
 	}
 
 	public void printTime() {
@@ -235,15 +288,20 @@ public class Scheduler {
 
 		long responseTime = 0;
 		long tat = 0;
+		
+		for(int i = 0; i < amountOfProcs; i++) {
+			//System.out.println("Waiting: " + waiting[i]);
+			System.out.println("Start time: " + startTime[i]);
+			//System.out.println("End time: " + endTime[i]);
 
+		}
 		// response time
-		for (int i = 0; i < amountOfProcs; i++) {
+		/*for (int i = 0; i < amountOfProcs; i++) {
 			responseTime += startTime[i] - waiting[i];
 			tat += endTime[i] - waiting[i];
-		}
+		}*/
 		System.out.println("Policy: " + policy);
 		System.out.println("Average response time: " + responseTime / amountOfProcs);
 		System.out.println("Average turnaround time: " + tat / amountOfProcs);
-
 	}
 }
