@@ -7,7 +7,6 @@ import com.ru.usty.scheduling.ProcessComp;
 public class Scheduler {
 
 	ProcessExecution processExecution;
-	//Process proc;
 	ProcessInfo pInfo;
 	ProcessInfo currProcess;
 	
@@ -26,12 +25,15 @@ public class Scheduler {
 	PriorityQueue<SPNProc> pQueue;
 	PriorityQueue<SRTProc> SRTQueue;
 	ArrayList<Integer> RoundRobin;
+	PriorityQueue<ProcessComp> hRRNQueue;
 
 	/* TIMING OF PROCESSES */
-	long[] waiting = new long[amountOfProcs];	//
-	long[] startTime = new long[amountOfProcs];	// when process reaches execution
-	long[] endTime = new long [amountOfProcs];	// after execution
+	
+	long[] waiting;	//
+	long[] startTime;	// when process reaches execution
+	long[] endTime;	// after execution
 
+	
 	/**
 	 * DO NOT CHANGE DEFINITION OF OPERATION
 	 */
@@ -51,6 +53,11 @@ public class Scheduler {
 		this.policy = policy;
 		this.quantum = quantum;
 		this.currProc = -1; //ID of currently running process - procID's start at 0
+		//reset the time counters
+		
+		waiting = new long[amountOfProcs];
+		startTime = new long[amountOfProcs];
+		endTime = new long[amountOfProcs];
 
 		switch (policy) {
 		case FCFS: // First-come-first-served
@@ -64,9 +71,7 @@ public class Scheduler {
 			break;
 		case RR: // Round robin
 			System.out.println("Starting new scheduling task: Round robin, quantum = " + quantum);
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			this.RoundRobin = new ArrayList<Integer>();
 			break;
 		case SPN: // Shortest process next
 			System.out.println("Starting new scheduling task: Shortest process next");
@@ -81,9 +86,7 @@ public class Scheduler {
 			break;
 		case HRRN: // Highest response ratio next
 			System.out.println("Starting new scheduling task: Highest response ratio next");
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			this.hRRNQueue = new PriorityQueue<ProcessComp>();
 			break;
 		case FB: // Feedback
 			System.out.println("Starting new scheduling task: Feedback, quantum = " + quantum);
@@ -186,9 +189,17 @@ public class Scheduler {
 			
 			break;
 		case HRRN: // Highest response ratio next
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			ProcessComp pComp = new ProcessComp(processID, processExecution.getProcessInfo(processID));
+			if(hRRNQueue.isEmpty()) {
+				hRRNQueue.add(pComp);
+				processExecution.switchToProcess(processID);
+				currProcess = processExecution.getProcessInfo(processID);
+				startTime[processID] = System.currentTimeMillis();
+			}
+			else {
+				updateHRRNqueue();
+				hRRNQueue.add(pComp);
+			}
 			break;
 		case FB: // Feedback
 			/**
@@ -209,7 +220,7 @@ public class Scheduler {
 		case FCFS:
 			// gets the head of the list and removes it
 			this.FCFSstructure.remove(processID);
-			endTime[processID] = System.currentTimeMillis();
+			//endTime[processID] = System.currentTimeMillis();
 			// now if list isn't empty, we execute the next node
 			if (!this.FCFSstructure.isEmpty()) {
 				// get next head and execute that process
@@ -268,9 +279,22 @@ public class Scheduler {
 			
 			break;
 		case HRRN: // Highest response ratio next
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			if(hRRNQueue.peek().getProcessID() == processID) {
+				System.out.println("Success.");	
+				hRRNQueue.remove(hRRNQueue.element());
+			}
+			else {
+				System.out.println("Process has been moved in queue, removing correct one.");
+				ProcessComp temp = new ProcessComp(processID, currProcess);
+				hRRNQueue.remove(temp);
+			}
+			endTime[processID] = System.currentTimeMillis();
+			updateHRRNqueue();
+			if(!hRRNQueue.isEmpty()) {
+				processExecution.switchToProcess(hRRNQueue.peek().getProcessID());
+				startTime[hRRNQueue.peek().getProcessID()] = System.currentTimeMillis();
+				currProcess = processExecution.getProcessInfo(hRRNQueue.peek().getProcessID());
+			}
 			break;
 		case FB: // Feedback
 			/**
@@ -284,7 +308,7 @@ public class Scheduler {
 	}
 
 	public void printTime() {
-		// calculations for response time and total turnaround time
+		// calculations for response time and total turn-around time
 
 		long responseTime = 0;
 		long tat = 0;
@@ -295,13 +319,24 @@ public class Scheduler {
 			//System.out.println("End time: " + endTime[i]);
 
 		}
-		// response time
-		/*for (int i = 0; i < amountOfProcs; i++) {
-			responseTime += startTime[i] - waiting[i];
-			tat += endTime[i] - waiting[i];
-		}*/
+
 		System.out.println("Policy: " + policy);
 		System.out.println("Average response time: " + responseTime / amountOfProcs);
 		System.out.println("Average turnaround time: " + tat / amountOfProcs);
+	}
+	
+	private void updateHRRNqueue() {
+		PriorityQueue<ProcessComp> temp = new PriorityQueue<ProcessComp>();
+		for (int i = 0; i < amountOfProcs; i++) {
+			//check if endTime has been recorded
+			if(waiting[i] != 0) {
+				if(endTime[i] == 0) {
+					ProcessComp pComp = new ProcessComp(i, processExecution.getProcessInfo(i));
+					temp.add(pComp);
+				}
+			}
+		hRRNQueue.clear();
+		hRRNQueue.addAll(temp);
+		}
 	}
 }
