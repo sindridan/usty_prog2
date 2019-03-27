@@ -47,7 +47,7 @@ public class TestSuite {
 
 	private static void initTestProcesses() {
 		testProcesses = new ArrayList<ProcessDescription>();
-		/*
+		
 		testProcesses.add(new ProcessDescription(0, 1500));
 		testProcesses.add(new ProcessDescription(1000, 3000));
 		testProcesses.add(new ProcessDescription(2000, 2000));
@@ -63,7 +63,7 @@ public class TestSuite {
 		testProcesses.add(new ProcessDescription(18000, 500));
 		testProcesses.add(new ProcessDescription(18000, 1500));
 		testProcesses.add(new ProcessDescription(18500, 500));
-		*/
+		
 		//Tests for SRT
 		/*
 		testProcesses.add(new ProcessDescription(0, 1000));
@@ -76,11 +76,12 @@ public class TestSuite {
 		testProcesses.add(new ProcessDescription(700, 100));*/
 		
 		//Tests for RR
-		testProcesses.add(new ProcessDescription(0, 1000));
-		testProcesses.add(new ProcessDescription(400, 2000));
-		testProcesses.add(new ProcessDescription(8000, 1500));
-		testProcesses.add(new ProcessDescription(1200, 1000));
-
+		/*
+		testProcesses.add(new ProcessDescription(0, 2500));
+		testProcesses.add(new ProcessDescription(400, 4000));
+		testProcesses.add(new ProcessDescription(800, 2500));
+		testProcesses.add(new ProcessDescription(1200, 3500));
+		*/
 	}
 
 	private static void startScheduling(Policy policy, int quantum) {

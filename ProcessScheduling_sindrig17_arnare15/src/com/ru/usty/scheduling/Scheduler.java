@@ -15,17 +15,22 @@ public class Scheduler {
 	
 	/* OTHER VARIABLES IN RELATION TO TIMING AND PROCESSES */
 
-	final int amountOfProcs = 4; // hardcoded, can be fixed by getting the size of arraylist from testsuite
+	final int amountOfProcs = 15; // hardcoded, can be fixed by getting the size of arraylist from testsuite
 	int procsFinished = 0;
 	int currProc;
+	boolean procRunning = false; // used for RR, lets next process run if false, turning to true
+	int idToIndex; // get the id matching the index
 
 	/* DATA STRUCTURES FOR IMPLEMENTATIONS */
 
 	Queue<Integer> FCFSstructure;
 	PriorityQueue<SPNProc> pQueue;
 	PriorityQueue<SRTProc> SRTQueue;
-	ArrayList<Integer> RoundRobin;
+	//ArrayList<Integer> RoundRobin;
+	LinkedList<Integer> RoundRobin; // used a linkedlist because we need to get first and last nodes in list
 	PriorityQueue<ProcessComp> hRRNQueue;
+	
+	
 
 	/* TIMING OF PROCESSES */
 	
@@ -58,6 +63,9 @@ public class Scheduler {
 		waiting = new long[amountOfProcs];
 		startTime = new long[amountOfProcs];
 		endTime = new long[amountOfProcs];
+		
+		this.procsFinished = 0;
+		
 
 		switch (policy) {
 		case FCFS: // First-come-first-served
@@ -71,7 +79,9 @@ public class Scheduler {
 			break;
 		case RR: // Round robin
 			System.out.println("Starting new scheduling task: Round robin, quantum = " + quantum);
-			this.RoundRobin = new ArrayList<Integer>();
+			//this.RoundRobin = new ArrayList<Integer>();
+			this.RoundRobin = new LinkedList<Integer>();
+			procRunning = false;
 			break;
 		case SPN: // Shortest process next
 			System.out.println("Starting new scheduling task: Shortest process next");
@@ -128,9 +138,11 @@ public class Scheduler {
 
 			break;
 		case RR: // Round robin
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			RoundRobin.add(processID);
+			if (RoundRobin.size() == 1) {
+				RRThread(processID);
+			}
+
 			break;
 		case SPN: // Shortest process next
 			SPNProc spnproc = new SPNProc(processID, processExecution.getProcessInfo(processID));
@@ -220,7 +232,7 @@ public class Scheduler {
 		case FCFS:
 			// gets the head of the list and removes it
 			this.FCFSstructure.remove(processID);
-			//endTime[processID] = System.currentTimeMillis();
+			endTime[processID] = System.currentTimeMillis();
 			// now if list isn't empty, we execute the next node
 			if (!this.FCFSstructure.isEmpty()) {
 				// get next head and execute that process
@@ -229,9 +241,20 @@ public class Scheduler {
 			}
 			break;
 		case RR: // Round robin
-			/**
-			 * Add your policy specific initialization code here (if needed)
-			 */
+			System.out.println("Removing process: " + processID);
+			RoundRobin.remove(RoundRobin.indexOf(processID));
+			endTime[processID] = System.currentTimeMillis();
+			procRunning = false;
+			
+			if(!this.RoundRobin.isEmpty()) {
+				if(processID < RoundRobin.size()) {
+					processExecution.switchToProcess(processID+1);
+				}
+				else {
+					processExecution.switchToProcess(RoundRobin.getFirst());
+				}
+				
+			}
 			break;
 			
 		case SPN: // Shortest process next
@@ -313,11 +336,9 @@ public class Scheduler {
 		long responseTime = 0;
 		long tat = 0;
 		
-		for(int i = 0; i < amountOfProcs; i++) {
-			//System.out.println("Waiting: " + waiting[i]);
-			System.out.println("Start time: " + startTime[i]);
-			//System.out.println("End time: " + endTime[i]);
-
+		for (int i = 0; i < amountOfProcs; i++) {
+			responseTime += startTime[i] - waiting[i];
+			tat += endTime[i] - waiting[i];
 		}
 
 		System.out.println("Policy: " + policy);
@@ -338,5 +359,50 @@ public class Scheduler {
 		hRRNQueue.clear();
 		hRRNQueue.addAll(temp);
 		}
+	}
+	
+	//Helper function for Round Robin, threads need to sleep processes for quantum time
+	public void RRThread(final int processID) {
+		idToIndex = RoundRobin.indexOf(processID);
+		Thread thr = new Thread() {
+			public void run() {
+				//Constantly keep the thread running and checking for changes of processes
+				while(!RoundRobin.isEmpty()) {
+					try {
+						System.out.println("RR size: " + RoundRobin.size());
+						System.out.println("Current index: " + idToIndex);
+						if(!procRunning) {
+							procRunning = true;
+							processExecution.switchToProcess(idToIndex);
+						}
+						else {		
+							processExecution.switchToProcess(idToIndex);
+						}
+						if(startTime[idToIndex] == 0) {
+							startTime[idToIndex] = System.currentTimeMillis();
+						}
+						Thread.sleep(quantum + 10);
+						if(!RoundRobin.isEmpty()) {
+							if(idToIndex < RoundRobin.getLast()) {
+								idToIndex++;
+								if(RoundRobin.size() > 1) {
+									while(!RoundRobin.contains(idToIndex)) {
+										idToIndex++;
+									}
+								}
+							}
+							else {
+									idToIndex = RoundRobin.getFirst();
+							}
+						}
+					}
+					catch (InterruptedException e) {
+		            	//Error
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+		thr.start();
 	}
 }
